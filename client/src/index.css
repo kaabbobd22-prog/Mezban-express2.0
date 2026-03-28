@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mezban-maroon: #5C190F;
+  --color-mezban-cream: #F6F1E5;
+  --color-mezban-gold: #C5934E;
+  --font-serif: 'Playfair Display', serif;
+}
+
+@layer base {
+  body {
+    @apply bg-mezban-cream font-sans;
+  }
+}
