@@ -11,11 +11,29 @@ dotenv.config();
 
 const app = express();
 
-// Middleware - Live URL allow kora
+// --- CORS CONFIGURATION (FIXED) ---
+const allowedOrigins = [
+  "https://mezban-express2-0.vercel.app", // Apnar Vercel URL
+  "http://localhost:5173",                // Local development er jonno
+  "http://localhost:5174"
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173", // Vercel URL pore eikhane boshabe
-  credentials: true
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 app.use(express.json());
 
 // MongoDB Connection
@@ -46,8 +64,12 @@ app.post('/api/admin/login', (req, res) => {
 
 // Get Menu
 app.get('/api/foods', async (req, res) => {
-  const foods = await Food.find({});
-  res.json(foods);
+  try {
+    const foods = await Food.find({});
+    res.json(foods);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching foods" });
+  }
 });
 
 // Create Order + Send Email
@@ -61,9 +83,17 @@ app.post('/api/orders', async (req, res) => {
       from: process.env.EMAIL_USER,
       to: req.body.customerEmail,
       subject: 'Order Confirmed - Mezban Express',
-      html: `<h2>Hello ${req.body.customerName},</h2>
-             <p>Your order for <b>${req.body.foodName}</b> has been received.</p>
-             <p>Total: ${req.body.totalPrice}tk. We will call you at ${req.body.customerPhone} soon!</p>`
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee;">
+          <h2 style="color: #800000;">Hello ${req.body.customerName},</h2>
+          <p>Your order for <b>${req.body.foodName}</b> has been received.</p>
+          <p><b>Total Price:</b> ${req.body.totalPrice} tk</p>
+          <p><b>Quantity:</b> ${req.body.quantity}</p>
+          <p>We will call you at <b>${req.body.customerPhone}</b> soon for delivery!</p>
+          <hr />
+          <p style="font-size: 12px; color: #777;">Thank you for choosing Mezban Express.</p>
+        </div>
+      `
     };
 
     transporter.sendMail(mailOptions);
@@ -75,8 +105,12 @@ app.post('/api/orders', async (req, res) => {
 
 // Get All Orders (Admin)
 app.get('/api/orders', async (req, res) => {
-  const orders = await Order.find({}).sort({ createdAt: -1 });
-  res.json(orders);
+  try {
+    const orders = await Order.find({}).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching orders" });
+  }
 });
 
 const PORT = process.env.PORT || 5000;
