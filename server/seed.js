@@ -14,7 +14,7 @@ const foodData = [
     image: "../client/public/banner.png" 
   },
   { 
-    title: "Double Person", 
+    title: "Tripple Person", 
     originalPrice: 1197, 
     offerPrice: 799, 
     image: "../client/public/banner.png" 
